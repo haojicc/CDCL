@@ -2,23 +2,24 @@
 // Created by Hao Ji on 2023/05/01.
 //
 
-#include "solver.h"
+#include "satSolver.h"
 
 
-solver::solver(vector<vector<int>> &cnf, int numOfClause, int numOfVariable) :cnf(cnf), decisionLevel(0),assignment(numOfVariable+1){
+satSolver::satSolver(vector<vector<int>> &cnf, int numOfClause, int numOfVariable) : cnf(cnf), decisionLevel(0), assignment(numOfVariable + 1){
     this->numOfClause = numOfClause;
     this->numOfVariable = numOfVariable;
     initialize();
 }
 
 //入口主函数
-bool solver::solve() {
+bool satSolver::solve() {
     if(!initUnitPropagation()){
         return false;
     }
 
     decisionLevel++;
     int p = pickVariable();
+    int time = 4;
     while(p != 0){
         trail.push_back(p);
         assignment[abs(p)] = p;
@@ -27,6 +28,7 @@ bool solver::solve() {
 
         while(unitPropagation() == false){
             int backtrackLevel = conflictAnalysis();
+//            cout << "backtrackLevel:"<< backtrackLevel << endl;
             if(backtrackLevel < 1){
                 return false;
             }else{
@@ -38,7 +40,10 @@ bool solver::solve() {
         if(p == numOfVariable+1){
             return false;
         }
-
+//        time--;
+//        if(time == 0){
+//            return false;
+//        }
     }
 
     return true;
@@ -51,7 +56,7 @@ bool solver::solve() {
  * head：hash-table，里面放了一个1维数组，1维数组里面存了这个变量所在的cnf编码。
  * tail：hash-table，里面放了一个1维数组
  * */
-void solver::initialize() {
+void satSolver::initialize() {
     cout << "initialize:" << endl;
     for (int i = 0; i < cnf.size(); i++) {
         for (auto var : cnf[i]) {
@@ -74,7 +79,7 @@ void solver::initialize() {
  * ***但是这个确定的literal，也可能导致其他的unit propagation
  * ***
  * */
-bool solver::initUnitPropagation() {
+bool satSolver::initUnitPropagation() {
     queue<int> q;
     for(auto& clause: cnf){
         if(clause.size() > 1){
@@ -128,8 +133,22 @@ bool solver::initUnitPropagation() {
  * 需要把所有已经decision的变量都检查一遍是否有unit 的情况
  * 但是需要一个特定的条件，如果没发现conflict，是要把trail里面的所有元素都pop出来的，这个是为什么呢？
  * */
-bool solver::unitPropagation() {
+bool satSolver::unitPropagation() {
     queue<int> q;
+//    for(int i = numOfClause; i < cnf.size(); i++){
+//        auto clause = cnf[i];
+//        if(clause.size() > 1){
+//            continue;
+//        }
+//        if(assignment[abs(clause[0])] == -clause[0]){
+//            return false;
+//        }
+//        trail.push_back(clause[0]);
+//        assignment[abs(clause[0])] = clause[0];
+//        decisionLevels[clause[0]] = decisionLevel;
+//        reason[clause[0]] = -1;
+//        q.push(clause[0]);
+//    }
     for(auto it: trail){
         q.push(it);
     }
@@ -184,7 +203,7 @@ bool solver::unitPropagation() {
  * 返回一个需要回复的level，然后在函数里面需要调用生成learned clause的函数
  * 返回的level，判断是否为0，如果为0，则unsat，这个判断需要在哪里？
  * */
-int solver::conflictAnalysis() {
+int satSolver::conflictAnalysis() {
     vector<int> clause;
     queue<int> q;
     unordered_map<int, bool> seen;
@@ -224,7 +243,7 @@ int solver::conflictAnalysis() {
 /*
  * 输入是需要回溯到哪一层，清空不必要的数据。
  * */
-void solver::backtrack(int level){
+void satSolver::backtrack(int level){
     while(!trail.empty()){
         int p = trail.back();
         if(decisionLevels[p] >= level){
@@ -245,7 +264,7 @@ void solver::backtrack(int level){
 /*
  * 新增的学习clause还需要被记录，这个如何实现？
  * */
-void solver::learnClause(vector<int>& clause){
+void satSolver::learnClause(vector<int>& clause){
     int newClauseId = cnf.size();
 //    cout << "Learn Clause:"<< newClauseId << endl;
 //    printClause(clause);
@@ -257,7 +276,7 @@ void solver::learnClause(vector<int>& clause){
     return;
 }
 
-int solver::pickVariable() {
+int satSolver::pickVariable() {
     for (int i = 1; i <= numOfVariable; i++) {
         if(assignment[i] != 0){
             continue;
@@ -269,7 +288,7 @@ int solver::pickVariable() {
 
 
 //辅助函数：
-void solver::printCNF(){
+void satSolver::printCNF(){
     cout << "Print CNF:" << endl;
     for(int i = 0; i < cnf.size(); i++){
         cout << "clause id:  " << i << "\tliterals:   ";
@@ -279,13 +298,13 @@ void solver::printCNF(){
         cout << endl;
     }
 }
-void solver::printAssignment(){
+void satSolver::printAssignment(){
     cout << "Print Assignment:" << endl;
     for(int i = 1; i<=numOfVariable;i++){
         cout << "variable:  " <<i << "\tvalue:" << assignment[i] << endl;
     }
 }
-void solver::printHead(){
+void satSolver::printHead(){
     cout << "Print Head:" << endl;
     for(int i = 1; i <= numOfVariable; i++){
         auto it = head.find(i);
@@ -310,7 +329,7 @@ void solver::printHead(){
 //        cout << endl;
 //    }
 }
-void solver::printTail(){
+void satSolver::printTail(){
     cout << "Print Tail:" << endl;
     for(auto it: tail){
         cout << "variable:  " << it.first << " :" ;
@@ -320,13 +339,13 @@ void solver::printTail(){
         cout << endl;
     }
 }
-void solver::printTrail(){
+void satSolver::printTrail(){
     cout << "Print Trail:" << endl;
     for(int i = 0; i < trail.size(); i++){
         cout << "index:" << i << "   L_t:" << trail[i] << "   R:" << reason[trail[i]] << "   DL:" << decisionLevels[trail[i]] << endl;
     }
 }
-int solver::findConflictLiteral(vector<int>& clause){
+int satSolver::findConflictLiteral(vector<int>& clause){
     for(int i = trail.size()-1; i >= 0; i--){
         for(auto literal : clause){
             if(trail[i] == -literal){
@@ -337,7 +356,7 @@ int solver::findConflictLiteral(vector<int>& clause){
     return numOfVariable+1;
 }
 
-void solver::printDecisionLevels(){
+void satSolver::printDecisionLevels(){
     cout << "Print Decision Levels:" << endl;
     for(auto it: decisionLevels){
         cout << "variable:  " << it.first << " :"  << it.second << endl;
@@ -345,7 +364,7 @@ void solver::printDecisionLevels(){
     cout << "--------------------" << endl;
 }
 
-void solver::printReason(){
+void satSolver::printReason(){
     cout << "Print Reason:" << endl;
     for(auto it: reason){
         cout << "variable:  " << it.first << " :"  << it.second << endl;
@@ -353,14 +372,14 @@ void solver::printReason(){
     cout << "--------------------" << endl;
 }
 
-void solver::printClause(vector<int>& clause){
+void satSolver::printClause(vector<int>& clause){
     for(auto var: clause){
         cout << var << "\t";
     }
     cout << endl;
 }
 
-bool solver::checkAssignment(vector<int>& ans){
+bool satSolver::checkAssignment(vector<int>& ans){
     cout << "Check Assignment:" << endl;
     for(int i = 1; i<=numOfVariable;i++){
         if(ans[i] != assignment[i]){
@@ -372,3 +391,6 @@ bool solver::checkAssignment(vector<int>& ans){
     return true;
 }
 
+int satSolver::getLearnSize(){
+    return learned.size();
+}

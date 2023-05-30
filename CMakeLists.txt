@@ -3,4 +3,4 @@ project(CDCL)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(CDCL main.cpp util.cpp util.h solver.cpp solver.h)
+add_executable(CDCL main.cpp util.cpp util.h satSolver.cpp satSolver.h)

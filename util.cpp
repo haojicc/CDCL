@@ -69,6 +69,9 @@ vector<vector<int>> util::openFile(string input_filename){
         } else{
             c = split(line, ' ');
             c.pop_back(); // get rid of the last 0;
+            if(c.size() == 0){
+                continue;
+            }
             res.push_back(c);
         }
     }

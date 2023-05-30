@@ -2,8 +2,8 @@
 // Created by Hao Ji on 2023/05/01.
 //
 
-#ifndef CDCL_SOLVER_H
-#define CDCL_SOLVER_H
+#ifndef CDCL_SATSOLVER_H
+#define CDCL_SATSOLVER_H
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -11,9 +11,9 @@
 #include "queue"
 using namespace std;
 
-class solver {
+class satSolver {
 public:
-    solver(vector<vector<int>>& cnf, int numOfClause, int numOfVariable);
+    satSolver(vector<vector<int>>& cnf, int numOfClause, int numOfVariable);
     bool solve();
     void initialize();
     bool initUnitPropagation();
@@ -33,6 +33,7 @@ public:
     void printReason();
     void printClause(vector<int>& clause);
     bool checkAssignment(vector<int>& ans);
+    int getLearnSize();
 
 private:
     vector<int> assignment; //直接存正负值，不用1和-1来表示，如果是0，代表还没有分配
@@ -53,4 +54,4 @@ private:
 };
 
 
-#endif //CDCL_SOLVER_H
+#endif //CDCL_SATSOLVER_H
